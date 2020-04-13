@@ -1,0 +1,9 @@
+mittens==0.2
+bayesian_optimization==1.1.0
+spacy==2.2.3
+Keras==2.3.1
+keras_multi_head==0.22.0
+git+https://www.github.com/keras-team/keras-contrib.git
+jedi==0.15.2
+xeus-python
+tensorboard

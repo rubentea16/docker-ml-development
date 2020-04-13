@@ -1,0 +1,12 @@
+numpy
+pandas
+tqdm
+scikit-learn
+matplotlib
+seaborn
+setuptools
+xlrd
+ipython
+nbconvert
+requests
+Flask
