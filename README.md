@@ -14,30 +14,38 @@ Achieve 90% on Accuracy per Word
 1. End-to-end Sequence Labeling via Bi-directional LSTM-CNNs-CRF (Xuezhe Ma , Eduard Hovy)
 2. Character-level Convolutional Networks for Text Classification (Xiang Zhang , Junbo Zhao , Yann LeCun)
 3. Multi-Head-Attention
+4. Some trial and error approach
 
 ## Timeline Project
 Development Cycle
 
 No|Task|Deadline
 ---|---|---
-1|data preparation| 01-01-2019
-2|cleansing| 10-01-2019
-3|preprocessing| 20-01-2019
-4|modeling| 30-01-2019
-5|reports & documentation| 10-02-2019
-    
+1|data preparation (create data train & labelling)| 24-01-2020
+2|re-train model (use FastText word embedding)| 30-01-2020
+3|evaluate performance on "sent-comb" data| 03-02-2020
+4|create new word embedding & evaluate performance of the embedding| 05-02-2020
+5|hyperparameter exploration & tuning| 07-02-2020
+6|add more train data (balancing data)| 17-02-2020
+7|re-train model| 17-02-2020
+8|fine tuning| 18-02-2020
+9|create api endpoint for web-app| 02-04-2020    
+10|split/update description label| 14-04-2020
+11|improve ner systems (change some layers, try some params, etc)| 17-04-2020    
 ## Branch
 
     |-- master
+    |-- old-version
 
 ## Methods
-Your methods
+Your methods -- (**test-data** is  "sent-comb.txt" as generated text from ASR output from Bentar)
 
-No|Methods|Metrics
----|---|---
-1|Method-1| 90%
-2|Method-1| 90%
-3|Method-1| 90%
+No|Embedding|Methods|Accuracy per **sentence** on *val-data*|Accuracy per **word** on *val-data*|Accuracy per **sentence** on *test-data*|Accuracy per **word** on *test-data* 
+---|---|---|---|---|---|---
+1|FastText Pre-trained Indonesia|Bi-LSTM-CNN-LSTM-MultiHeadAttention-CRF| 73% | 83% | - | - |
+2|GloVe|Bi-LSTM-CNN-LSTM-MultiHeadAttention-CRF| 88 % | 97% | 58.8% | 90.5% |
+3|Embedding Deep Learning by trainable|Bi-LSTM-CNN-LSTM-MultiHeadAttention-CRF| 86.5%| 95.2% | 59.4% | 89% |
+4|GloVe|Bi-LSTM-CNN(modified)-MultiHeadAttention(head_num modified)-CRF| 89.6%| 97.6% | 60.8% | 91.4% |
 
 ## Project Trees
     
@@ -75,8 +83,8 @@ No|Methods|Metrics
     
     In /config directory you will find :
         - Dockerfile
-        - common_libs.txt
-        - specific_libs.txt
+        - common_libs.txt (library you need to install)
+        - specific_libs.txt (library you need to install)
         - jupyter notebook config file
     
     
