@@ -25,7 +25,7 @@ maxwordlength = 15
 sess = tf.Session()
 graph = tf.get_default_graph()
 set_session(sess)
-model = models.load_model("model/ner_warung.h5",
+model = models.load_model("model/ner_order_v5.h5",
                           custom_objects = {'CRF':CRF,'crf_loss':crf_loss,
                                   'crf_accuracy':crf_accuracy,'MultiHeadAttention':MultiHeadAttention})
 model.summary()

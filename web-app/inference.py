@@ -22,16 +22,18 @@ def convert_to_vector(text, word2Idx, char2Idx, maxwordlength):
         i = token.text
         try:
             word_indices.append(word2Idx[i])
+            unknown = False
         except KeyError:
-            word_indices.append(word2Idx["UNK"])
+            unknown = True #word_indices.append(word2Idx["UNK"])
         
-        tok = []
-        for j in i:
-            try:
-                tok.append(char2Idx[j])
-            except KeyError:
-                tok.append(char2Idx["UNK"])
-        char_indices.append(pad_sequences([tok], maxlen=maxwordlength)[0])
-        
+        if unknown == False:
+            tok = []
+            for j in i:
+                try:
+                    tok.append(char2Idx[j])
+                except KeyError:
+                    tok.append(char2Idx["UNK"])
+            char_indices.append(pad_sequences([tok], maxlen=maxwordlength)[0])
+
     return [word_indices, char_indices]
 

@@ -3,7 +3,7 @@
 
 # ## Import Library
 
-# In[1]:
+# In[ ]:
 
 
 from keras.preprocessing.sequence import pad_sequences
@@ -22,7 +22,7 @@ nlp = MultiLanguage() #pre-trained model NER
 import math
 
 
-# In[2]:
+# In[ ]:
 
 
 def readline(filename):
@@ -50,7 +50,7 @@ def readline(filename):
     return sentences
 
 
-# In[3]:
+# In[ ]:
 
 
 def createMatrices(sentences, word2Idx, label2Idx, char2Idx):
@@ -103,7 +103,7 @@ def createMatrices(sentences, word2Idx, label2Idx, char2Idx):
     return dataset
 
 
-# In[4]:
+# In[ ]:
 
 
 def addCharInformation(sentences):
@@ -120,7 +120,7 @@ def addCharInformation(sentences):
     return sentences
 
 
-# In[5]:
+# In[ ]:
 
 
 def padding(sentences):
@@ -138,7 +138,7 @@ def padding(sentences):
     return sentences
 
 
-# In[6]:
+# In[ ]:
 
 
 def createBatches(data):
@@ -164,7 +164,7 @@ def createBatches(data):
     return batches, batch_len
 
 
-# In[7]:
+# In[ ]:
 
 
 def iterate_minibatches(dataset,batch_len):
@@ -194,7 +194,7 @@ def iterate_minibatches(dataset,batch_len):
             yield feature, np.asarray(labels)
 
 
-# In[8]:
+# In[ ]:
 
 
 ## Predict data
@@ -219,7 +219,7 @@ def tag_dataset(dataset):
 
 # # 1. Open the file needed and Convert the word into list of chars
 
-# In[9]:
+# In[ ]:
 
 
 trainSentences = readline("../data/train/train_dataset.csv")
@@ -231,7 +231,7 @@ testSentences = addCharInformation(testSentences)
 
 # # 2. Get the Label from the dataset, and convert it to index
 
-# In[10]:
+# In[ ]:
 
 
 label_set = set()
@@ -247,7 +247,7 @@ idx2label = {v:k for k,v in label2idx.items()}
 
 # # 3. GloVe Word Embedding
 
-# In[11]:
+# In[ ]:
 
 
 ## Load word2idx pickle
@@ -259,7 +259,7 @@ embedding_file_path = '../model/glove_embedding.pkl'
 wordEmbeddings = pickle.load(open(embedding_file_path, "rb"))
 
 
-# In[12]:
+# In[ ]:
 
 
 ## n-dimensional vector of word embeddings
@@ -273,7 +273,7 @@ wordEmbeddings = np.concatenate((wordEmbeddings, np.random.uniform(-0.25*10**-3,
 
 # # 4. Get list of characters and its index
 
-# In[13]:
+# In[ ]:
 
 
 char2Idx = {"PAD":0, "UNK":1}
@@ -283,7 +283,7 @@ for c in " 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,-_()[
 
 # # 5. Create Dataset
 
-# In[14]:
+# In[ ]:
 
 
 train_set = createMatrices(trainSentences, 
@@ -297,21 +297,21 @@ test_set = createMatrices(testSentences,
                char2Idx = char2Idx)
 
 
-# In[15]:
+# In[ ]:
 
 
 train_set = padding(train_set)
 test_set = padding(test_set)
 
 
-# In[16]:
+# In[ ]:
 
 
 X_train, X_test = train_test_split(train_set, train_size = 0.8, random_state=42, shuffle=True)
 X_val, X_test = train_test_split(X_test, train_size= 0.5, random_state=42, shuffle=True)
 
 
-# In[17]:
+# In[ ]:
 
 
 train_batch, train_batch_len = createBatches(X_train)
@@ -320,7 +320,7 @@ test_batch, test_batch_len = createBatches(X_test)
 real_test_batch, real_test_batch_len = createBatches(test_set)
 
 
-# In[18]:
+# In[ ]:
 
 
 print(train_batch_len)
@@ -329,7 +329,7 @@ print(test_batch_len)
 print(real_test_batch_len)
 
 
-# In[19]:
+# In[ ]:
 
 
 batch_size = 256
@@ -373,12 +373,20 @@ real_test_batch_size.sort()
 
 # # Model
 
-# In[20]:
+# In[ ]:
+
+
+maxwordlength = 15
+dropout_p = 0.5
+char_embedding_dim = 30 #16
+
+
+# In[ ]:
 
 
 from keras.layers import Input, Embedding, Dropout, TimeDistributed, Conv1D, Dense, multiply, CuDNNLSTM, GlobalAveragePooling1D
 from keras.layers import Concatenate, MaxPooling1D, GlobalMaxPooling1D, Flatten, Bidirectional, LSTM, ThresholdedReLU, BatchNormalization
-from keras.initializers import RandomUniform
+from keras.initializers import RandomUniform, RandomNormal
 from keras.models import Model, load_model
 from keras.utils import plot_model,Progbar
 from keras.callbacks import EarlyStopping
@@ -386,15 +394,7 @@ from keras_multi_head import MultiHeadAttention
 from keras import optimizers
 
 
-# In[22]:
-
-
-maxwordlength = 15
-dropout_p = 0.5
-char_embedding_dim = 16
-
-
-# In[23]:
+# In[ ]:
 
 
 def get_word_embed(wordEmbeddings):
@@ -408,7 +408,7 @@ def get_word_embed(wordEmbeddings):
     return words_input, words
 
 
-# In[24]:
+# In[ ]:
 
 
 def get_char_embed(maxwordlength, char2Idx, char_embedding_dim):
@@ -417,21 +417,19 @@ def get_char_embed(maxwordlength, char2Idx, char_embedding_dim):
     ## Embedding Layer
     chars = TimeDistributed(Embedding(input_dim = len(char2Idx),
                   output_dim = char_embedding_dim,
-                  embeddings_initializer = RandomUniform(minval=-0.5, maxval=0.5)))(chars_input)
+                  embeddings_initializer = RandomNormal(mean=0.0, stddev=0.05)))(chars_input)
     return chars_input, chars
 
 
-# In[28]:
+# In[ ]:
 
 
-def build_character_block(block, dropout=0.5, filters=[64, 100], kernel_size=[3, 3], 
-                           pool_size=[2, 2], padding='valid', activation='relu', 
-                           kernel_initializer='glorot_normal'):
+def build_character_block(block, dropout=0.3, filters=[64, 100], kernel_size=[3, 3], 
+                           pool_size=[2, 2], padding='valid', activation='relu'):
     
     for i in range(len(filters)):
         block = TimeDistributed(Conv1D(filters=filters[i], kernel_size=kernel_size[i],
-                       padding=padding, activation=activation,
-                       kernel_initializer=kernel_initializer))(block)
+                       padding=padding, activation=activation))(block)
         block = TimeDistributed(Dropout(dropout))(block)
         block = TimeDistributed(MaxPooling1D(pool_size=pool_size[i]))(block)
         
@@ -440,7 +438,7 @@ def build_character_block(block, dropout=0.5, filters=[64, 100], kernel_size=[3,
     return block
 
 
-# In[29]:
+# In[ ]:
 
 
 def get_model(dropout_p, chars, words):
@@ -456,7 +454,7 @@ def get_model(dropout_p, chars, words):
     ## MultiHeadAttention
     '''Multi-head attention allows the model to jointly attend to information from different
     representation subspaces at different positions''' 
-    attn = MultiHeadAttention(head_num=8, name = 'Multi-head')(output)
+    attn = MultiHeadAttention(head_num=16, name = 'Multi-head')(output) #8
     ## Batch Normalization
     output = BatchNormalization()(attn)
     ## CRF
@@ -466,7 +464,7 @@ def get_model(dropout_p, chars, words):
     return output
 
 
-# In[30]:
+# In[ ]:
 
 
 words_input, words = get_word_embed(wordEmbeddings)
@@ -474,7 +472,7 @@ chars_input, chars = get_char_embed(maxwordlength, char2Idx, char_embedding_dim)
 output = get_model(dropout_p, chars, words)
 
 
-# In[31]:
+# In[ ]:
 
 
 ## Optimizer
@@ -505,7 +503,7 @@ history = model.fit_generator(train_generator, steps_per_epoch=len(train_batch_s
 # In[ ]:
 
 
-model.save("../model/ner_order_v4.h5")
+model.save("../model/ner_order_vx.h5")
 
 
 # ## Plot model accuracy and loss
@@ -547,7 +545,7 @@ pickle.dump(label2idx, open("../data/pickle_file/label2idx.pkl","wb"))
 # In[ ]:
 
 
-model = load_model("../model/ner_order_v4.h5",
+model = load_model("../model/ner_order_vx.h5",
                    custom_objects ={'CRF':CRF,
                                    'crf_loss':crf_loss,
                                    'crf_accuracy':crf_accuracy,
@@ -557,15 +555,33 @@ model = load_model("../model/ner_order_v4.h5",
 # In[ ]:
 
 
-def checkaccuracy(predict_label,correct_label):
+def checkaccuracy_word(predict_label,correct_label):
+    counter = 0
+    idx_wrong_pred = []
+    
+    for idx_sentence in tqdm(range(len(predict_label))):
+        for idx_word in range(len(predict_label[idx_sentence])):
+            if (predict_label[idx_sentence][idx_word]) == (correct_label[idx_sentence][idx_word]):
+                counter += 1
+            else :
+                idx_wrong_pred.append(idx_sentence)
+                
+    total_word = 0
+    for i in predict_label:
+        total_word += len(i)
+        
+    return (counter*100/total_word), idx_wrong_pred
+
+
+# In[ ]:
+
+
+def checkaccuracy_sent(predict_label, correct_label):
     count = 0
-    for i in zip(predict_label, correct_label):
-        if(i[0] != i[1]):
+    for idx in range(len(predict_label)):
+        if (predict_label[idx] == correct_label[idx]).all() :
             count += 1
-    if(count == 0):
-        return 1
-    else:
-        return 0
+    return (count*100/len(predict_label))
 
 
 # In[ ]:
@@ -575,7 +591,11 @@ def checkaccuracy(predict_label,correct_label):
 predLabels, correctLabels = tag_dataset(test_batch)
 
 # Calculate Performance of model on data
-counter = 0
-for i in range(len(predLabels)):
-    counter += checkaccuracy(predLabels[i], correctLabels[i])
-print("Accuracy:", counter/len(predLabels))
+count_word, idx_wrong_pred = checkaccuracy_word(predLabels, correctLabels)
+count_sent = checkaccuracy_sent(predLabels, correctLabels)
+print("Accuracy per sentence :", count_sent)
+print("Accuracy per word :", count_word)
+
+
+
+
