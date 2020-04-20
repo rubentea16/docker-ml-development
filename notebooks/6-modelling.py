@@ -1,15 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# ## Import Library
+
 # In[1]:
-
-
-get_ipython().system(u'pip install git+https://www.github.com/keras-team/keras-contrib.git --user -q')
-get_ipython().system(u'pip install spacy --user -q')
-get_ipython().system(u'pip install glove_python --user -q')
-
-
-# In[2]:
 
 
 from keras.preprocessing.sequence import pad_sequences
@@ -18,7 +12,6 @@ from keras_contrib.losses import crf_loss
 from keras_contrib.metrics import crf_accuracy
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm_notebook as tqdm
-from glove import Corpus, Glove
 import glob
 import numpy as np
 import pandas as pd
@@ -29,7 +22,7 @@ nlp = MultiLanguage() #pre-trained model NER
 import math
 
 
-# In[3]:
+# In[2]:
 
 
 def readline(filename):
@@ -57,7 +50,7 @@ def readline(filename):
     return sentences
 
 
-# In[4]:
+# In[3]:
 
 
 def createMatrices(sentences, word2Idx, label2Idx, char2Idx):
@@ -110,7 +103,7 @@ def createMatrices(sentences, word2Idx, label2Idx, char2Idx):
     return dataset
 
 
-# In[5]:
+# In[4]:
 
 
 def addCharInformation(sentences):
@@ -127,7 +120,7 @@ def addCharInformation(sentences):
     return sentences
 
 
-# In[6]:
+# In[5]:
 
 
 def padding(sentences):
@@ -145,7 +138,7 @@ def padding(sentences):
     return sentences
 
 
-# In[7]:
+# In[6]:
 
 
 def createBatches(data):
@@ -171,7 +164,7 @@ def createBatches(data):
     return batches, batch_len
 
 
-# In[8]:
+# In[7]:
 
 
 def iterate_minibatches(dataset,batch_len):
@@ -201,7 +194,7 @@ def iterate_minibatches(dataset,batch_len):
             yield feature, np.asarray(labels)
 
 
-# In[9]:
+# In[8]:
 
 
 ## Predict data
@@ -226,19 +219,19 @@ def tag_dataset(dataset):
 
 # # 1. Open the file needed and Convert the word into list of chars
 
-# In[10]:
+# In[9]:
 
 
-trainSentences = readline("../data/clean/dataset.csv")
+trainSentences = readline("../data/train/train_dataset.csv")
 trainSentences = addCharInformation(trainSentences)
 
-testSentences = readline("../data/clean/test.csv")
+testSentences = readline("../data/test/test_dataset.csv")
 testSentences = addCharInformation(testSentences)
 
 
 # # 2. Get the Label from the dataset, and convert it to index
 
-# In[11]:
+# In[10]:
 
 
 label_set = set()
@@ -252,22 +245,21 @@ label2idx = {v:k for k,v in enumerate(sorted(label_set))}
 idx2label = {v:k for k,v in label2idx.items()}
 
 
-# # 3. Mittens Word Embedding (Extensions for GloVe model). Its retrofitting model
+# # 3. GloVe Word Embedding
 
-# In[12]:
+# In[11]:
 
 
 ## Load word2idx pickle
-pickle_word2idx_glove = open("../data/pickle_file/word2idx_glove.pkl","rb")
-word2idx_glove = pickle.load(pickle_word2idx_glove)
-word2Idx = {i[0]:i[1] for i in word2idx_glove}
+word2idx_corpus = pickle.load(open("../data/pickle_file/word2idx_corpus.pkl","rb"))
+word2Idx = {i[0]:i[1] for i in word2idx_corpus}
 
-## Load mittens embedding
-embedding_file_path = '../model/mittens_embedding.pkl'
+## Load GloVe embedding
+embedding_file_path = '../model/glove_embedding.pkl'
 wordEmbeddings = pickle.load(open(embedding_file_path, "rb"))
 
 
-# In[13]:
+# In[12]:
 
 
 ## n-dimensional vector of word embeddings
@@ -281,7 +273,7 @@ wordEmbeddings = np.concatenate((wordEmbeddings, np.random.uniform(-0.25*10**-3,
 
 # # 4. Get list of characters and its index
 
-# In[14]:
+# In[13]:
 
 
 char2Idx = {"PAD":0, "UNK":1}
@@ -291,7 +283,7 @@ for c in " 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.,-_()[
 
 # # 5. Create Dataset
 
-# In[15]:
+# In[14]:
 
 
 train_set = createMatrices(trainSentences, 
@@ -305,21 +297,21 @@ test_set = createMatrices(testSentences,
                char2Idx = char2Idx)
 
 
-# In[16]:
+# In[15]:
 
 
 train_set = padding(train_set)
 test_set = padding(test_set)
 
 
-# In[17]:
+# In[16]:
 
 
-X_train, X_test = train_test_split(train_set, train_size = 0.75, random_state=42, shuffle=True)
+X_train, X_test = train_test_split(train_set, train_size = 0.8, random_state=42, shuffle=True)
 X_val, X_test = train_test_split(X_test, train_size= 0.5, random_state=42, shuffle=True)
 
 
-# In[18]:
+# In[17]:
 
 
 train_batch, train_batch_len = createBatches(X_train)
@@ -328,7 +320,7 @@ test_batch, test_batch_len = createBatches(X_test)
 real_test_batch, real_test_batch_len = createBatches(test_set)
 
 
-# In[19]:
+# In[18]:
 
 
 print(train_batch_len)
@@ -337,7 +329,7 @@ print(test_batch_len)
 print(real_test_batch_len)
 
 
-# In[20]:
+# In[19]:
 
 
 batch_size = 256
@@ -381,11 +373,11 @@ real_test_batch_size.sort()
 
 # # Model
 
-# In[21]:
+# In[20]:
 
 
 from keras.layers import Input, Embedding, Dropout, TimeDistributed, Conv1D, Dense, multiply, CuDNNLSTM, GlobalAveragePooling1D
-from keras.layers import Concatenate, MaxPooling1D, GlobalMaxPooling1D, Flatten, Bidirectional, LSTM, ThresholdedReLU
+from keras.layers import Concatenate, MaxPooling1D, GlobalMaxPooling1D, Flatten, Bidirectional, LSTM, ThresholdedReLU, BatchNormalization
 from keras.initializers import RandomUniform
 from keras.models import Model, load_model
 from keras.utils import plot_model,Progbar
@@ -399,7 +391,7 @@ from keras import optimizers
 
 maxwordlength = 15
 dropout_p = 0.5
-char_embedding_dim = 30
+char_embedding_dim = 16
 
 
 # In[23]:
@@ -429,22 +421,32 @@ def get_char_embed(maxwordlength, char2Idx, char_embedding_dim):
     return chars_input, chars
 
 
-# In[25]:
+# In[28]:
+
+
+def build_character_block(block, dropout=0.5, filters=[64, 100], kernel_size=[3, 3], 
+                           pool_size=[2, 2], padding='valid', activation='relu', 
+                           kernel_initializer='glorot_normal'):
+    
+    for i in range(len(filters)):
+        block = TimeDistributed(Conv1D(filters=filters[i], kernel_size=kernel_size[i],
+                       padding=padding, activation=activation,
+                       kernel_initializer=kernel_initializer))(block)
+        block = TimeDistributed(Dropout(dropout))(block)
+        block = TimeDistributed(MaxPooling1D(pool_size=pool_size[i]))(block)
+        
+    block = TimeDistributed(GlobalMaxPooling1D())(block)
+    block = TimeDistributed(Flatten())(block)
+    return block
+
+
+# In[29]:
 
 
 def get_model(dropout_p, chars, words):
-    ## Convolution layer
-    conv = TimeDistributed(Dropout(dropout_p))(chars)
-    conv = TimeDistributed(Conv1D(filters = 30,
-                                  kernel_size = 3,
-                                  padding = 'same',
-                                  activation = 'tanh',
-                                  strides = 1))(conv)
-    conv = TimeDistributed(MaxPooling1D(maxwordlength))(conv)
-    ## Flatten
-    conv = TimeDistributed(Flatten())(conv)
-    chars = TimeDistributed(Dropout(dropout_p))(conv)
-    ## Concatenate words embed and char-representation
+    ## Character embedding use CNN
+    chars = build_character_block(chars)
+    ## Concatenate words-embedding and char-embedding
     output = Concatenate()([words, chars])
     ## Bi-LSTM
     output = Bidirectional(CuDNNLSTM(200, kernel_initializer='random_uniform',
@@ -452,12 +454,11 @@ def get_model(dropout_p, chars, words):
     ## Dropout
     output = Dropout(dropout_p)(output)
     ## MultiHeadAttention
-    attn = MultiHeadAttention(head_num=400, name = 'Multi-head')(output)
-    ## LSTM
-    output = CuDNNLSTM(200, kernel_initializer='random_uniform',
-             bias_initializer='zeros', return_sequences = True)(attn)
-    ## Dropout
-    output = Dropout(dropout_p)(output)
+    '''Multi-head attention allows the model to jointly attend to information from different
+    representation subspaces at different positions''' 
+    attn = MultiHeadAttention(head_num=8, name = 'Multi-head')(output)
+    ## Batch Normalization
+    output = BatchNormalization()(attn)
     ## CRF
     crf = CRF(len(label2idx), sparse_target=True)
     output = crf(output)
@@ -465,7 +466,7 @@ def get_model(dropout_p, chars, words):
     return output
 
 
-# In[26]:
+# In[30]:
 
 
 words_input, words = get_word_embed(wordEmbeddings)
@@ -486,7 +487,7 @@ print(model.summary())
 
 # # Training Process
 
-# In[32]:
+# In[ ]:
 
 
 ## Generator
@@ -496,18 +497,45 @@ test_generator = iterate_minibatches(real_test_batch, real_test_batch_size)
 
 early_stopping_callback = EarlyStopping(monitor='val_crf_accuracy', mode='max', verbose=1, patience=10)
 epochs = 50
-model.fit_generator(train_generator, steps_per_epoch=len(train_batch_size), epochs=epochs,
+history = model.fit_generator(train_generator, steps_per_epoch=len(train_batch_size), epochs=epochs,
                     callbacks=[early_stopping_callback],
-                    validation_data=test_generator, validation_steps=len(real_test_batch_size))
+                    validation_data=val_generator, validation_steps=len(val_batch_size), shuffle=True)
 
 
-# In[33]:
+# In[ ]:
 
 
-model.save("../model/ner_new.h5")
+model.save("../model/ner_order_v4.h5")
 
 
-# In[34]:
+# ## Plot model accuracy and loss
+
+# In[ ]:
+
+
+import matplotlib.pyplot as plt
+# %matplotlib inline
+# list all data in history
+print(history.history.keys())
+# summarize history for accuracy
+plt.plot(history.history['crf_accuracy'])
+plt.plot(history.history['val_crf_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+# summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
+
+# In[ ]:
 
 
 import pickle
@@ -516,17 +544,17 @@ pickle.dump(char2Idx, open("../data/pickle_file/char2idx.pkl","wb"))
 pickle.dump(label2idx, open("../data/pickle_file/label2idx.pkl","wb"))
 
 
-# In[35]:
+# In[ ]:
 
 
-model = load_model("../model/ner_new.h5",
+model = load_model("../model/ner_order_v4.h5",
                    custom_objects ={'CRF':CRF,
                                    'crf_loss':crf_loss,
                                    'crf_accuracy':crf_accuracy,
                                    'MultiHeadAttention':MultiHeadAttention})
 
 
-# In[36]:
+# In[ ]:
 
 
 def checkaccuracy(predict_label,correct_label):
@@ -540,7 +568,7 @@ def checkaccuracy(predict_label,correct_label):
         return 0
 
 
-# In[37]:
+# In[ ]:
 
 
 # Performance on dev dataset
@@ -551,84 +579,3 @@ counter = 0
 for i in range(len(predLabels)):
     counter += checkaccuracy(predLabels[i], correctLabels[i])
 print("Accuracy:", counter/len(predLabels))
-
-
-# # Fine Tuning using Bayesian Optimization
-
-# In[39]:
-
-
-get_ipython().system(u'pip install bayesian-optimization --user -q')
-
-
-# In[49]:
-
-
-def fit_with(verbose, wordEmbeddings, maxwordlength, char2Idx, char_embedding_dim, train_generator, 
-             train_batch_size, test_generator, real_test_batch_size, dropout_p, lr):
-    
-    # Create the embedding
-    words_input, words = get_word_embed(wordEmbeddings)
-    chars_input, chars = get_char_embed(maxwordlength, char2Idx, char_embedding_dim)
-    
-    # Create the model using a specified hyperparameters.
-    model = get_model(dropout_p, chars, words)
-
-    # Train the model for a specified number of epochs.
-    optimizer = optimizers.Nadam(learning_rate=lr, beta_1=0.9, beta_2=0.999)
-    model = Model(inputs = [words_input, chars_input], outputs = [model])
-    model.compile(loss = crf_loss, optimizer = optimizer, metrics=[crf_accuracy])
-
-    # Train the model with the train dataset.
-    epochs = 10
-    model.fit_generator(train_generator, steps_per_epoch=len(train_batch_size), epochs=epochs)
-
-    # Evaluate the model with the test dataset.
-    score = model.evaluate_generator(test_generator, steps=len(real_test_batch_size))
-    print('Test loss:', score[0])
-    print('Test accuracy:', score[1])
-
-    # Return the accuracy.
-    return score[1]
-
-
-# In[50]:
-
-
-from functools import partial
-
-verbose = 1
-fit_with_partial = partial(fit_with, verbose, wordEmbeddings, maxwordlength, char2Idx,
-                           char_embedding_dim, train_generator,train_batch_size, test_generator,
-                           real_test_batch_size)
-
-
-# In[52]:
-
-
-from bayes_opt import BayesianOptimization
-
-# Bounded region of parameter space
-pbounds = {'dropout_p': (0.35, 0.7), 'lr': (0.001, 0.01)}
-
-optimizer = BayesianOptimization(
-    f=fit_with_partial,
-    pbounds=pbounds,
-    verbose=2,
-    random_state=1,
-)
-
-optimizer.maximize(init_points=3, n_iter=50)
-
-
-for i, res in enumerate(optimizer.res):
-    print("Iteration {}: \n\t{}".format(i, res))
-
-print(optimizer.max)
-
-
-# In[ ]:
-
-
-
-
