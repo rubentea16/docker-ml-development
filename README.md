@@ -46,6 +46,7 @@ No|Embedding|Methods|Accuracy per **sentence** on *val-data*|Accuracy per **word
 2|GloVe|Bi-LSTM-CNN-LSTM-MultiHeadAttention-CRF| 88 % | 97% | 58.8% | 90.5% |
 3|Embedding Deep Learning by trainable|Bi-LSTM-CNN-LSTM-MultiHeadAttention-CRF| 86.5%| 95.2% | 59.4% | 89% |
 4|GloVe|Bi-LSTM-CNN(modified)-MultiHeadAttention(head_num modified)-CRF| 89.6%| 97.6% | 60.8% | 91.4% |
+4|GloVe|Bi-LSTM-CNN(modified)-MultiHeadAttention(head_num modified)-CRF **char-embed-dim**=30 **head-num**=16| 96.5%| 99% | 62.5% | 90.46% |
 
 ## Project Trees
     
