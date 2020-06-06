@@ -1,5 +1,8 @@
 # Machine Learning Project Name
 
+## Development Environment
+In this template i used "tensorflow:1.15.2-gpu-py3" docker image which support for GPU computation
+
 ## Background
 This is background why we did this project
 
